@@ -1,0 +1,98 @@
+<!DOCTYPE html> 
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Brainfuck Runner</title>
+    <script src="brainfuck.js"></script>
+    <script src="programs.js"></script>
+    <script src="tests.js"></script>
+    <script src="leetcode.js"></script>
+    <script>
+
+
+let testHost = null;
+
+let runTest = (name, inputs, expected, code) => {
+  
+  let result = runAndGetError(inputs, expected, code);
+  let div = document.createElement('div');
+  if (result) {
+    div.style.color = '#f00';
+    div.innerText = name + ": " + result;
+  } else {
+    div.style.color = '#080';
+    div.innerText = name + ": PASS!";
+  }
+  testHost.append(div);
+};
+
+
+let stringifyArgs = (args) => {
+  return JSON.stringify(args.map(arg => typeof arg === 'number' ? (arg & 255) : arg));
+};
+
+let runAndGetError = (inputs, expected, code) => {
+  let bf = BrainFuck().setCode(code);
+
+  let offset = 0;
+  for (let i = 0; i < inputs.length; i++) {
+    switch (typeof inputs[i]) {
+      case 'string':
+        bf.setString(inputs[i], offset);
+        offset += inputs[i].length + 1;
+        break;
+      case 'number':
+        bf.setInt8(inputs[i], offset++);
+        break;
+      case 'boolean':
+        bf.setInt8(inputs[i] ? 1 : 0, offset++);
+        break;
+      default:
+        throw new Error("Not supported");
+    }
+  }
+
+  try {
+    bf.run();
+  } catch (e) {
+    return "FAIL: " + e;
+  }
+
+  let actual = [];
+  offset = 0;
+  for (let i = 0; i < expected.length; i++) {
+    let value = null;
+    switch (typeof expected[i]) {
+      case 'string': 
+        value = bf.getString(offset);
+        offset += expected[i].length + 1;
+        break;
+      case 'number':
+        value = bf.getInt8(offset++);
+        break;
+      case 'boolean':
+        value = !!bf.getInt8(offset++);
+        break;
+      default:
+        throw new Error("Not supporpted");
+    }
+    actual.push(value);
+  }
+  if (stringifyArgs(expected) === stringifyArgs(actual)) {
+    return null;
+  } else {
+    return "FAIL! Expected " + stringifyArgs(expected) + " but found " + stringifyArgs(actual);
+  }
+};
+
+window.addEventListener('load', () => {
+  testHost = document.getElementById('test-host');
+  runTests();
+});
+    </script>
+  </head>
+  <body>
+    <div id="test-host"></div>
+  </body>
+</html>
